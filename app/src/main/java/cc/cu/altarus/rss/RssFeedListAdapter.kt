@@ -3,7 +3,6 @@ package cc.cu.altarus.rss
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.AsyncTask
-import android.os.Build
 import android.support.v7.widget.RecyclerView
 import android.text.Html
 import android.text.SpannableString
@@ -42,12 +41,8 @@ class RssFeedListAdapter(
         holder.linkText.text = rssFeedModel.link ?: ""
 
         val rawDescription = rssFeedModel.description ?: ""
-        val spanned = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            Html.fromHtml(rawDescription, Html.FROM_HTML_MODE_LEGACY)
-        } else {
-            @Suppress("DEPRECATION")
-            Html.fromHtml(rawDescription)
-        }
+        @Suppress("DEPRECATION")
+        val spanned = Html.fromHtml(rawDescription)
 
         val spannableDescr = SpannableString(spanned)
         val imgSpans = spannableDescr.getSpans(0, spannableDescr.length, ImageSpan::class.java)
@@ -85,8 +80,9 @@ class RssFeedListAdapter(
             return try {
                 Log.v(TAG, "Parsed URL is: $urlAddr")
                 val url = URL(urlAddr)
-                val inputStream = url.openConnection().getInputStream()
-                BitmapFactory.decodeStream(inputStream)
+                url.openConnection().getInputStream().use { inputStream ->
+                    BitmapFactory.decodeStream(inputStream)
+                }
             } catch (e: MalformedURLException) {
                 Log.e(TAG, "Malformed URL: $urlAddr", e)
                 null
